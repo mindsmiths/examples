@@ -35,4 +35,4 @@ Personality switch - adding multiple personality options
 *In case you want to see a more detailed tutorial go to the following link*
 http://docs.sandbox.mindsmiths.io/
 
-> NOTE: you will need TELEGRAM BOT TOKEN and OPEN API KEY. You can find API key here: https://beta.openai.com/account/api-keys.
+> NOTE: you will need a TELEGRAM BOT TOKEN and an OPEN API KEY. You can find API key here: https://beta.openai.com/account/api-keys.
