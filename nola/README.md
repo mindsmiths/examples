@@ -11,7 +11,7 @@ Nola is a fun personalized chatting agent.
 
 - *Features*
 
-- *License*
+- *Tutorial* 
 
 
 ### General info
