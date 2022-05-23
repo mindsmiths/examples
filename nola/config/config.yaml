@@ -2,7 +2,7 @@ global:
   dependencies:
     python:
       - forge-sdk==4.0.0a7
-      - forge-cli==4.0.0a6
+      - forge-cli==4.0.0a7
       - cecs==4.0.0a1
       - services/*.py
   env:
@@ -47,7 +47,7 @@ services:
 
   telegram-adapter:
     type: python
-    version: 4.0.0a8
+    version: 4.0.0a9
     db:
       mongo: true
     env:
@@ -58,7 +58,7 @@ services:
 
   gpt3-adapter:
     type: python
-    version: 4.0.0a6
+    version: 4.0.0a7
     env:
       OPENAI_API_KEY: "{{ env.OPENAI_API_KEY }}"
     resources:
