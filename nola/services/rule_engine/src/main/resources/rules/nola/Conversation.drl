@@ -1,0 +1,110 @@
+package rules.nola;
+
+import com.mindsmiths.gpt3.completion.GPT3Completion
+import com.mindsmiths.ruleEngine.model.Heartbeat
+import com.mindsmiths.ruleEngine.model.Initialize
+import com.mindsmiths.telegramAdapter.TelegramReceivedMessage
+
+import java.util.Date
+
+import agents.Nola
+import utils.Utils
+
+
+rule "First contact"
+    salience 100
+    when
+        initialize: Initialize() from entry-point "agent-created"
+        msg: TelegramReceivedMessage(name: firstName) from entry-point "signals"
+        agent: Nola()
+    then
+        agent.sendWelcomeMessage(name);
+        modify(agent) {setName(name)};
+        agent.send("SMITH", initialize, "new-agent");
+        delete(msg);
+end
+
+
+rule "Handle message"
+    when
+        msg: TelegramReceivedMessage() from entry-point "signals"
+        agent: Nola()
+    then
+        // adds the new user message to memory
+        modify(agent) {
+            addMessageToMemory(agent.getPersonality().getHumanName(agent.getName()), msg.getText()),
+            setPinged(false),
+            setLastInteractionTime(new Date())
+        };
+        agent.askGPT3();  // message text as input for GPT-3
+        delete(msg);
+end
+
+
+rule "Send GPT3 response"
+    when
+        // processing the received GPT-3 response
+        gpt3Result: GPT3Completion() from entry-point "signals"
+        agent: Nola()
+    then
+        String response = Utils.trimText(gpt3Result.getBestResponse());
+        agent.sendMessage(response);
+        // adds the new gpt3 response to memory
+        modify(agent) {addMessageToMemory(agent.getPersonality().getAiName(), response)};
+        delete(gpt3Result);
+end
+
+
+rule "Reset conversation"
+    salience 100
+    when
+        message: TelegramReceivedMessage(text.equalsIgnoreCase("reset")) from entry-point "signals"
+        agent: Nola()
+    then
+        modify(agent) {clearMemory()};
+        agent.sendMessage("I'll pretend this never happened 🤫");
+        delete(message);
+end
+
+
+rule "Expire conversation"
+    when
+        Heartbeat(ts: timestamp) from entry-point "signals" // getting current time from heartbeat timestamp
+        // there is an ongoing conversation and last interaction was over 2 minutes ago
+        agent: Nola(
+            memory.isEmpty() == false,
+            lastInteractionTime before[10m] ts
+        )
+    then
+        modify(agent) {clearMemory()};
+        agent.sendMessage("Talk to you some other time!");
+end
+
+
+rule "Re-engage user"
+    when
+        Heartbeat(ts: timestamp) from entry-point "signals"
+        agent: Nola(
+            memory.isEmpty() == false,
+            lastInteractionTime before[2m] ts,
+            pinged == false
+        )
+    then
+        modify(agent) {
+            addInstruction(String.format("A couple minutes passed. %1$s is inactive. Maybe %1$s wants to change the topic", agent.getName())),
+            setPinged(true)
+        };
+        agent.askGPT3();
+end
+
+
+rule "Switch personality"
+    salience 100
+    when
+        message: TelegramReceivedMessage(text.equalsIgnoreCase("switch")) from entry-point "signals"
+        agent: Nola()
+    then
+        modify(agent) {changePersonality()};
+        agent.sendMessage("Switched personality! " + agent.getPersonality().getUserPrompt());
+        delete(message);
+end
