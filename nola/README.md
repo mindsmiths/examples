@@ -21,7 +21,7 @@ Personality switch - adding multiple personality options for your agent
 
 ### Tutorial
 
-*In case you want to see a more detailed tutorial go to the following link*
+In case you want to see a more detailed tutorial go to the following link
 http://docs.sandbox.mindsmiths.io/
 
-> NOTE: to run the code, you will need a connection to Telegram (TELEGRAM BOT TOKEN) and to OpenAI's GPT-3 (OPEN API KEY), so make sure to set them in the .env file.
+> NOTE: To run the code, you will need a connection to Telegram (TELEGRAM BOT TOKEN) and to OpenAI's GPT-3 (OPEN API KEY), so make sure to set them in the .env file.
