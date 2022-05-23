@@ -14,6 +14,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
+import models.Personality;
+
 @Getter
 @Setter
 public class Nola extends Agent {

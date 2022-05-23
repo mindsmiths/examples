@@ -1,4 +1,4 @@
-package agents;
+package models;
 
 import lombok.Getter;
 
