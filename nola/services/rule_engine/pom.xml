@@ -42,12 +42,12 @@
 		<dependency>
 			<groupId>com.mindsmiths</groupId>
 			<artifactId>telegram-adapter-client</artifactId>
-			<version>4.0.0a7</version>
+			<version>4.0.0a9</version>
 		</dependency>
 		<dependency>
 			<groupId>com.mindsmiths</groupId>
 			<artifactId>gpt3-adapter-client</artifactId>
-			<version>4.0.0a6</version>
+			<version>4.0.0a7</version>
 		</dependency>
 	</dependencies>
 	<build>
