@@ -16,6 +16,9 @@ global:
 
   repository: "nexus.vingd.net"
 
+  cecs:
+    params: "-e venv"
+
 services:
   rule-engine:
     type: java
