@@ -1,0 +1,54 @@
+package rules.wallE;
+
+import java.util.Date
+
+import com.mindsmiths.ruleEngine.model.Heartbeat
+import com.mindsmiths.ruleEngine.util.Log
+
+import agents.wallE.WallE
+import agents.wallE.signals.WallECleaned
+import agents.EngineerAgent
+import signals.RobotCrashed
+import external.websockets.Restarted
+
+
+rule "Tasks cleaned"
+    when
+        WallECleaned() from entry-point "signals"
+        robot: WallE()
+    then
+        modify(robot) {
+            setLastCleaned(new Date()),
+            setAttemptingRestart(false)
+        };
+end
+
+//////////////////////////////////
+
+rule "Suspicious inactivity detected"
+    when
+        Heartbeat(now: timestamp) from entry-point "signals"
+        robot: WallE(lastCleaned before[6s] now, attemptingRestart == false)
+    then
+        Log.warn("Wall-E did not start the scheduled cleaning task. Trying to restart robot...");
+        robot.attemptRestart();
+        modify(robot) {setAttemptingRestart(true)};
+end
+
+//////////////////////////////////
+
+rule "Restart succeeded"
+    when
+        Restarted(success == true) from entry-point "signals"
+    then
+        Log.info("Successfully recovered Wall-E.");
+end
+
+rule "Restart failed"
+    when
+        Restarted(success == false) from entry-point "signals"
+        robot: WallE()
+    then
+        Log.error("Wall-E crashed and failed to restart! Notifying the engineer in charge.");
+        robot.send(EngineerAgent.ID, new RobotCrashed(WallE.ID));
+end
