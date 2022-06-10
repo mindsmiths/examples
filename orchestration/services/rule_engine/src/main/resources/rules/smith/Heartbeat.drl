@@ -1,0 +1,19 @@
+package rules.smith;
+
+import com.mindsmiths.ruleEngine.model.Heartbeat
+import com.mindsmiths.ruleEngine.util.Log
+
+import agents.Smith
+
+import java.util.Date;
+
+
+rule "Smith's Heartbeat"
+    when
+        Heartbeat(now: timestamp) from entry-point "signals"
+        smith: Smith(lastLog before[3m] now)
+    then
+        Integer hitls = Smith.countAgents("engineer") + Smith.countAgents("superior");
+        Log.info("Currently registered engineers in charge: " + hitls);
+        modify(smith) {setLastLog(new Date())};
+end

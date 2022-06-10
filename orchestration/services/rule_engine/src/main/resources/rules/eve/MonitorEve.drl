@@ -1,0 +1,97 @@
+package rules.eve;
+
+import java.util.Date
+
+import com.mindsmiths.ruleEngine.model.Heartbeat
+import com.mindsmiths.ruleEngine.util.Log
+
+import agents.EngineerAgent
+import agents.eve.Eve
+import agents.eve.signals.EveFinishedTask
+import agents.eve.signals.EveStartedTask
+import signals.RobotCrashed
+import signals.SuspiciousBehavior
+import external.websockets.Restarted
+
+
+rule "Task started"
+    when
+        event: EveStartedTask() from entry-point "signals"
+        robot: Eve()
+    then
+        insert(event);
+        modify(robot) {
+            setLastStarted(new Date()),
+            setAttemptingRestart(false)
+        };
+end
+
+rule "Task finished"
+    when
+        finishEvent: EveFinishedTask() from entry-point "signals"
+        startEvent: EveStartedTask()
+    then
+        delete(finishEvent);
+        delete(startEvent);
+end
+
+//////////////////////////////////
+
+rule "Task completion taking too long"
+    when
+        Heartbeat(now: timestamp) from entry-point "signals"
+
+        event: EveStartedTask(timestamp before[6s] now)
+        robot: Eve(attemptingRestart == false)
+    then
+        Log.warn("Eve taking too long to complete task " + event.getTask() + ". Restarting robot...");
+        modify(robot) {setAttemptingRestart(true)};
+        robot.attemptRestart();
+        delete(event);
+end
+
+rule "No tasks processed for a while"
+    when
+        Heartbeat(now: timestamp) from entry-point "signals"
+
+        robot: Eve(lastStarted before[6s] now, attemptingRestart == false)
+    then
+        Log.warn("Eve not starting tasks. Restarting robot...");
+        modify(robot) {setAttemptingRestart(true)};
+        robot.attemptRestart();
+end
+
+rule "Task completed with too few rows"
+    salience 100
+    when
+        event: EveFinishedTask(rows < 50) from entry-point "signals"
+        robot: Eve()
+    then
+        String warning = "Processed too few rows in task " + event.getTask() + ".";
+        Log.warn(warning);
+        robot.send(
+            EngineerAgent.ID,
+            new SuspiciousBehavior(Eve.ID, warning)
+        );
+end
+
+//////////////////////////////////
+
+rule "Restart succeeded"
+    when
+        Restarted(success == true) from entry-point "signals"
+    then
+        Log.info("Successfully recovered Eve.");
+end
+
+rule "Restart failed"
+    when
+        Restarted(success == false) from entry-point "signals"
+        robot: Eve()
+    then
+        Log.error("Eve crashed and failed to restart! Notifying the engineer in charge.");
+        robot.send(
+            EngineerAgent.ID,
+            new RobotCrashed(Eve.ID)
+        );
+end
