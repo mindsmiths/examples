@@ -22,8 +22,8 @@ class WebsocketAdapter(BaseService):
         asyncio.run(server())
 
     @api
-    def send(self, connectionId: str, payload: Any) -> None:
-        data = json.dumps(payload)
+    def send(self, connectionId: str, signal: Any) -> None:
+        data = json.dumps(signal)
         asyncio.run(self.send_via_socket(connectionId, data))
 
     async def send_via_socket(self, connectionId: str, message: Any) -> None:

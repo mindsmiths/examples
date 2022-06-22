@@ -6,15 +6,15 @@ import com.mindsmiths.ruleEngine.model.Heartbeat
 import com.mindsmiths.ruleEngine.util.Log
 
 import agents.wallE.WallE
-import agents.wallE.signals.WallECleaned
-import agents.EngineerAgent
+import agents.wallE.signals.Cleaned
+import agents.Engineer
 import signals.RobotCrashed
-import external.websockets.Restarted
+import signals.RobotRestarted
 
 
 rule "Tasks cleaned"
     when
-        WallECleaned() from entry-point "signals"
+        Cleaned() from entry-point "signals"
         robot: WallE()
     then
         modify(robot) {
@@ -39,16 +39,16 @@ end
 
 rule "Restart succeeded"
     when
-        Restarted(success == true) from entry-point "signals"
+        RobotRestarted(success == true) from entry-point "signals"
     then
         Log.info("Successfully recovered Wall-E.");
 end
 
 rule "Restart failed"
     when
-        Restarted(success == false) from entry-point "signals"
+        RobotRestarted(success == false) from entry-point "signals"
         robot: WallE()
     then
         Log.error("Wall-E crashed and failed to restart! Notifying the engineer in charge.");
-        robot.send(EngineerAgent.ID, new RobotCrashed(WallE.ID));
+        robot.send(Engineer.ID, new RobotCrashed(WallE.ID));
 end

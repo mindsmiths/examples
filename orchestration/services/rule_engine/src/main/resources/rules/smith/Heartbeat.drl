@@ -2,10 +2,13 @@ package rules.smith;
 
 import com.mindsmiths.ruleEngine.model.Heartbeat
 import com.mindsmiths.ruleEngine.util.Log
+import com.mindsmiths.ruleEngine.util.Agents
 
 import agents.Smith
+import agents.Engineer
+import agents.Superior;
 
-import java.util.Date;
+import java.util.Date
 
 
 rule "Smith's Heartbeat"
@@ -13,7 +16,7 @@ rule "Smith's Heartbeat"
         Heartbeat(now: timestamp) from entry-point "signals"
         smith: Smith(lastLog before[3m] now)
     then
-        Integer hitls = Smith.countAgents("engineer") + Smith.countAgents("superior");
+        Integer hitls = Agents.getByType(Engineer.class).size() + Agents.getByType(Superior.class).size();
         Log.info("Currently registered engineers in charge: " + hitls);
         modify(smith) {setLastLog(new Date())};
 end

@@ -1,18 +1,15 @@
 global:
   dependencies:
     python:
-      - forge-sdk==4.0.0a7
-      - forge-cli==4.0.0a7
+      - forge-sdk==4.0.0a9
+      - forge-cli==4.0.0a8
       - cecs==4.0.0a1
+      - psutil==5.9.1
       - services/*.py
   env:
-    PROJECT_NAME: "Orchestration"
     PROJECT_SLUG: "orchestration"
 
     LOG_LEVEL: INFO
-
-  secrets:
-    FOO: bar
 
   repository: "nexus.vingd.net"
 
@@ -35,7 +32,7 @@ services:
     db:
       mongo: true
     dependencies:
-      - rule-engine
+      - rule-engine-api==4.0.0a20
     resources:
       cpu: 69m
       memory: 65Mi
@@ -47,14 +44,14 @@ services:
     db:
       mongo: true
     dependencies:
-      - rule-engine
+      - rule-engine-api==4.0.0a20
     resources:
       cpu: 84m
       memory: 94Mi
 
   telegram-adapter:
     type: python
-    version: 4.0.0a8
+    version: 4.0.0a9
     db:
       mongo: true
     env:
@@ -65,7 +62,7 @@ services:
 
   forge-api:
     type: python
-    version: 4.0.0a1
+    version: 4.0.0a2
     command:
       run: "uvicorn forge_api.service:app"
       cwd: "."
@@ -78,7 +75,8 @@ services:
     db:
       mongo: true
     dependencies:
-      - websockets==10.2
+      - rule-engine-api==4.0.0a20
+      - websockets==10.3
     exposed: true
     resources:
       cpu: 100m

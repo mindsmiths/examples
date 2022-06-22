@@ -5,7 +5,6 @@ import com.mindsmiths.sdk.core.db.DataModel;
 import lombok.Data;
 
 @Data
-@DataModel(serviceName = "eve", eventName = "task_started")
-public class EveStartedTask extends Signal {
+public class StartedTask extends Signal {
     private String task;
 }

@@ -5,10 +5,12 @@ import logging
 import websockets
 from forge.conf import settings as forge_settings
 from forge.utils.store import Store
+from rule_engine.api import RuleEngineAPI
 from websockets.exceptions import ConnectionClosed
 
 from . import settings
-from .api.events import NewSocketConnection, SocketConnectionClosed, SocketMessage
+from .api import SocketMessageType, SignalMessage, EventMessage
+from .api.events import NewSocketConnection, SocketConnectionClosed
 
 store = Store()
 logger = logging.getLogger(forge_settings.DEFAULT_LOGGER)
@@ -28,7 +30,15 @@ async def process(websocket):
         async for message in websocket:
             logger.debug(f"Websocket server received {message=}")
             message = json.loads(message)
-            SocketMessage(connectionId=connection_id, message=message).emit()
+
+            if message['messageType'] == SocketMessageType.SIGNAL:
+                sig = SignalMessage(**message)
+                RuleEngineAPI.send_signal(sig.to, sig)
+            elif message['messageType'] == SocketMessageType.EVENT:
+                EventMessage(**message).emit()
+            else:
+                raise ValueError(f"Unrecognized messageType='{message['messageType']}'")
+
     except ConnectionClosed:
         logger.debug(f"Connection {connection_id} killed.")
         SocketConnectionClosed(connectionId=connection_id).emit()
