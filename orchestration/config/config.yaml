@@ -4,6 +4,7 @@ global:
       - forge-sdk==4.0.0a9
       - forge-cli==4.0.0a8
       - cecs==4.0.0a1
+      - psutil==5.9.1
       - services/*.py
   env:
     PROJECT_SLUG: "orchestration"
