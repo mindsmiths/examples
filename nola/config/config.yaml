@@ -1,18 +1,14 @@
 global:
   dependencies:
     python:
-      - forge-sdk==4.0.0a7
-      - forge-cli==4.0.0a7
+      - forge-sdk==4.0.0a9
+      - forge-cli==4.0.0a8
       - cecs==4.0.0a1
       - services/*.py
   env:
-    PROJECT_NAME: "Nola"
     PROJECT_SLUG: "nola"
 
     LOG_LEVEL: INFO
-  
-  secrets:
-    FOO: bar
 
   repository: "nexus.vingd.net"
 
@@ -34,6 +30,8 @@ services:
       HEARTBEAT_CYCLE: 5
     db:
       mongo: true
+    dependencies:
+      - rule-engine-api==4.0.0a20
     resources:
       cpu: 69m
       memory: 65Mi
@@ -44,6 +42,8 @@ services:
     version: 4.0.0a4
     db:
       mongo: true
+    dependencies:
+      - rule-engine-api==4.0.0a20
     resources:
       cpu: 84m
       memory: 94Mi
@@ -61,7 +61,7 @@ services:
 
   gpt3-adapter:
     type: python
-    version: 4.0.0a7
+    version: 4.0.0a8
     env:
       OPENAI_API_KEY: "{{ env.OPENAI_API_KEY }}"
     resources:
