@@ -22,7 +22,7 @@ This starts two ngrok sessions, with status online.
 
 
 You are now ready to move aheat to the second part of the setup. Download the project to your local machine. 
-Now go to `robots/urls.py` and connect to the platform: from the terminal running ngrok for port 8000, copy the first link in `Forwarding` (starts with `http://`) to ```settings.FORGE_API_URL = "paste here"```.
+Now go to `robots/urls.py` and connect to the platform: from the terminal running ngrok for port 8000, copy the first link in `Forwarding` (starts with `http://`) to ```settings.FORGE_API_URL =```.
 In the terminal running ngrok for 8765, copy the first link in `Forwarding` that starts with `http://`, but this time without the `http://`-part. Paste it here: ```FORGE_SOCKET_URL =```
 
 Now you need to run the robots! For that open five terminals in project root and run the following (don't forget to activate your virtual environment if you need to!):
