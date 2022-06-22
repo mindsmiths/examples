@@ -3,7 +3,7 @@ package agents;
 import com.mindsmiths.gpt3.GPT3AdapterAPI;
 import com.mindsmiths.ruleEngine.model.Agent;
 import com.mindsmiths.ruleEngine.util.Log;
-import com.mindsmiths.ruleEngine.util.Util;
+import com.mindsmiths.sdk.utils.Utils;
 import com.mindsmiths.telegramAdapter.TelegramAdapterAPI;
 import lombok.Getter;
 import lombok.Setter;
@@ -79,7 +79,7 @@ public class Nola extends Agent {
                 Arrays.asList(Personality.values())
         );
         choices.remove(personality);
-        personality = Util.randomChoice(choices);
+        personality = Utils.randomChoice(choices);
     }
 
 

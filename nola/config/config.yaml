@@ -9,9 +9,6 @@ global:
     PROJECT_SLUG: "nola"
 
     LOG_LEVEL: INFO
-  
-  secrets:
-    FOO: bar
 
   repository: "nexus.vingd.net"
 
