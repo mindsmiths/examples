@@ -1,7 +1,7 @@
 import os
 from time import sleep
 
-from forge.api import send_event
+import requests
 
 import urls  # noqa
 from utils import ensure_necessary_folders
@@ -22,6 +22,6 @@ def process_tasks():
 # Periodically cleaning completed tasks
 while True:
     done_tasks = process_tasks()
-    send_event(WALL_E, 'cleaned', {'tasks': len(done_tasks)})
+    requests.post(f"{urls.FORGE_API_URL}/signal/robot/WallE/Cleaned", json={'tasks': len(done_tasks)})
 
     sleep(2)

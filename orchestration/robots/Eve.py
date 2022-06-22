@@ -1,9 +1,8 @@
 import os
-import random
 import shutil
 from time import sleep
 
-from forge.api import send_event
+import requests
 
 import urls  # noqa
 from utils import ensure_necessary_folders
@@ -28,8 +27,8 @@ while True:
     tasks = os.listdir('robots/tasks/')
     for task in tasks:
         print(f"Doing task {task}")
-        send_event(EVE, 'task_started', {'task': task})
+        requests.post(f"{urls.FORGE_API_URL}/signal/robot/Eve/StartedTask", json={'task': task})
         rows = process_task(task)
-        send_event(EVE, 'task_finished', {'task': task, 'rows': rows})
+        requests.post(f"{urls.FORGE_API_URL}/signal/robot/Eve/FinishedTask", json={'task': task, 'rows': rows})
 
     sleep(2)

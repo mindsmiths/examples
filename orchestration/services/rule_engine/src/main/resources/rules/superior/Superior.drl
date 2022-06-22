@@ -2,14 +2,14 @@ package rules.superior;
 
 import com.mindsmiths.telegramAdapter.TelegramKeyboardAnswered
 
-import agents.SuperiorAgent
+import agents.Superior
 import signals.RobotCrashed
 
 
 rule "Notify that robot crashed"
     when
         signal: RobotCrashed() from entry-point "signals"
-        agent: SuperiorAgent()
+        agent: Superior()
     then
         agent.sendCrashOptions(
                 signal.getRobotId() + " crashed, please check it out.",
@@ -22,7 +22,7 @@ rule "Restart crashed robot"
     when
         msg: TelegramKeyboardAnswered(robotId: referenceId, answer == "AUTO") from entry-point "signals"
         signal: RobotCrashed(robotId == robotId)
-        agent: SuperiorAgent()
+        agent: Superior()
     then
         agent.attemptRestart(robotId);
         agent.sendMessage(robotId + " restarted.");

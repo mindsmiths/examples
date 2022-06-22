@@ -6,8 +6,8 @@ import com.mindsmiths.ruleEngine.util.Agents
 import com.mindsmiths.telegramAdapter.TelegramReceivedMessage
 import com.mindsmiths.telegramAdapter.TelegramKeyboardAnswered
 
-import agents.SuperiorAgent
-import agents.EngineerAgent
+import agents.Superior
+import agents.Engineer
 import signals.RobotCrashed
 import signals.SuspiciousBehavior
 import com.mindsmiths.ruleEngine.model.Initialize
@@ -17,7 +17,7 @@ rule "Welcome engineer"
     when
         msg: TelegramReceivedMessage() from entry-point "signals"
         initialize: Initialize() from entry-point "agent-created"
-        agent: EngineerAgent()
+        agent: Engineer()
     then
         agent.sendMessage("Welcome, " + msg.getFirstName());
         delete(msg);
@@ -28,7 +28,7 @@ end
 rule "Notify of suspicious behavior"
     when
         signal: SuspiciousBehavior() from entry-point "signals"
-        agent: EngineerAgent()
+        agent: Engineer()
     then
         agent.sendMessage(
                 signal.getRobotId() + " not behaving as expected: " +
@@ -39,7 +39,7 @@ end
 rule "Notify that robot crashed"
     when
         signal: RobotCrashed() from entry-point "signals"
-        agent: EngineerAgent()
+        agent: Engineer()
     then
         agent.sendCrashOptions(
                 signal.getRobotId() + " crashed! What would you like to do?",
@@ -52,7 +52,7 @@ rule "Automatically restart robot"
     when
         msg: TelegramKeyboardAnswered(robotId: referenceId, answer == "AUTO") from entry-point "signals"
         signal: RobotCrashed(robotId == robotId)
-        agent: EngineerAgent()
+        agent: Engineer()
     then
         agent.sendMessage("Restarting robot " + robotId + ".");
         agent.attemptRestart(robotId);
@@ -64,7 +64,7 @@ rule "Manually restart robot"
     when
         msg: TelegramKeyboardAnswered(robotId: referenceId, answer == "MANUAL") from entry-point "signals"
         signal: RobotCrashed(robotId == robotId)
-        agent: EngineerAgent()
+        agent: Engineer()
     then
         agent.sendMessage("Ok, " + robotId + " is now in your hands.");
         delete(msg);
@@ -75,9 +75,9 @@ rule "Notify superior"
     when
         msg: TelegramKeyboardAnswered(robotId: referenceId, answer == "SUPER") from entry-point "signals"
         signal: RobotCrashed(robotId == robotId)
-        agent: EngineerAgent()
+        agent: Engineer()
     then
-        agent.send(SuperiorAgent.ID, signal);
+        agent.send(Superior.ID, signal);
         delete(msg);
         delete(signal);
 end
@@ -86,10 +86,10 @@ rule "Notify superior on inactivity"
     when
         Heartbeat(now: timestamp) from entry-point "signals"
         signal: RobotCrashed(timestamp before[1m] now)
-        agent: EngineerAgent()
+        agent: Engineer()
     then
         Log.warn("The engineer in charge taking too long to respond, notifying the superior.");
-        agent.send(SuperiorAgent.ID, signal);
+        agent.send(Superior.ID, signal);
         delete(signal);
 end
 
@@ -99,10 +99,10 @@ rule "Change engineer into superior"
     salience 100
     when
         msg: TelegramReceivedMessage(text.equalsIgnoreCase("super admin")) from entry-point "signals"
-        agent: EngineerAgent()
+        agent: Engineer()
     then
         agent.sendMessage("Setting your admin rights...");
-        Agents.createAgent(new SuperiorAgent(agent));
+        Agents.createAgent(new Superior(agent));
         Agents.deleteAgent(agent);
         delete(msg);
 end
