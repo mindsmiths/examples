@@ -1,0 +1,49 @@
+package rules.roboPatient
+
+import com.mindsmiths.ruleEngine.model.Initialize
+import com.mindsmiths.ruleEngine.util.Log
+import com.mindsmiths.telegramAdapter.TelegramReceivedMessage
+
+import agents.doctor.Doctor
+import agents.roboPatient.RoboPatient
+import signals.BMIMeasurement
+import signals.BMIResponse
+import utils.BMIUtils
+
+
+rule "Register robopatient created"
+    salience 100
+    when
+        initialize: Initialize() from entry-point "agent-created"
+        message: TelegramReceivedMessage(text: text, !BMIUtils.isValidWeight(text)) from entry-point "signals"
+        roboPatient: RoboPatient()
+    then
+        Log.info("Created a robot patient with id " + roboPatient.getId());
+        roboPatient.sendMessage("Welcome, " + roboPatient.getId());
+        delete(initialize);
+        delete(message);
+end
+
+rule "Process weight"
+    when
+        message: TelegramReceivedMessage(text: text, BMIUtils.isValidWeight(text)) from entry-point "signals"
+        roboPatient: RoboPatient()
+    then
+        double weight = Double.parseDouble(text);
+        BMIMeasurement bmiMeasurement = new BMIMeasurement(roboPatient.getAge(), weight, roboPatient.getHeight());
+        roboPatient.send(Doctor.ID, bmiMeasurement);
+        delete(message);
+end
+
+rule "BMI request answered"
+    when
+        response: BMIResponse(req: request) from entry-point "signals"
+        roboPatient: RoboPatient()
+    then
+        String text = String.format(
+                                      "Child with weight (%.1f kg) is %s",
+                                      req.getWeight(), response.isObese() ? "obese" : "not obese"
+                                  );
+        roboPatient.sendMessage(text);
+        delete(response);
+end
