@@ -1,0 +1,95 @@
+package rules.patient
+
+import java.util.Date
+
+import com.mindsmiths.sdk.utils.Utils
+import com.mindsmiths.gpt3.completion.GPT3Completion
+import com.mindsmiths.ruleEngine.model.Initialize
+import com.mindsmiths.ruleEngine.model.Heartbeat
+import com.mindsmiths.telegramAdapter.TelegramReceivedMessage
+
+import agents.doctor.Doctor
+import agents.patient.Patient
+import signals.BMIMeasurement
+import signals.BMIResponse
+import utils.BMIUtils
+
+
+rule "Welcome patient"
+    salience 100
+    when
+        initialize: Initialize() from entry-point "agent-created"
+        message: TelegramReceivedMessage() from entry-point "signals"
+        patient: Patient()
+    then
+        patient.sendWelcomeMessage();
+        delete(initialize);
+        delete(message);
+end
+
+rule "Get BMI measurement"
+    when
+        message: TelegramReceivedMessage(text: text, BMIUtils.isValidWeight(text)) from entry-point "signals"
+        patient: Patient()
+    then
+        double weight = Double.parseDouble(text);
+        BMIMeasurement bmiMeasurement = new BMIMeasurement(patient.getAge(), weight, patient.getHeight());
+        patient.send(Doctor.ID, bmiMeasurement);
+        String confirmationText = Utils.randomChoice(Patient.confirmationTexts);
+        patient.sendMessage(confirmationText);
+        modify(patient) {setWaitingForAnswer(true)}
+        delete(message);
+end
+
+rule "BMI request answered"
+    when
+        res: BMIResponse() from entry-point "signals"
+        patient: Patient()
+    then
+        BMIMeasurement bmi = res.getRequest();
+        patient.sendMessage(
+            String.format(
+                "Your child with its current weight (%.1f kg) is %s",
+                bmi.getWeight(), res.isObese() ? "obese" : "not obese"
+            )
+        );
+        modify(patient) {
+            setLastInteractionTime(new Date()),
+            setPinged(false),
+            setWaitingForAnswer(false)
+        };
+        delete(res);
+end
+
+rule "Unrecognizable message"
+    salience -100
+    when
+        message: TelegramReceivedMessage(text: text) from entry-point "signals"
+        patient: Patient()
+    then
+        patient.askGPT3("You're a doctor talking to a patient. " +
+                            "The patient should send their child's weight. The patient sent you an invalid message. " +
+                            "Ask politely for the correct latest weight for their child in the number of kilograms:");
+        delete(message);
+end
+
+rule "Engage patient"
+    when
+        Heartbeat(now: timestamp) from entry-point "signals"
+        patient: Patient(lastInteractionTime before[30s] now, pinged == false, waitingForAnswer != true)
+    then
+        patient.askGPT3("You are a doctor talking to a patient." +
+                            "The patient should send their child's weight for a regular check-up." +
+                            "A week has passed, remind the patient to send you the updated weight so you could check it:");
+        modify(patient) {setPinged(true)};
+end
+
+rule "Send GPT3 response"
+    when
+        gpt3Result: GPT3Completion() from entry-point "signals"
+        patient: Patient()
+    then
+        String response = gpt3Result.getBestResponse();
+        patient.sendMessage(response);
+        delete(gpt3Result);
+end

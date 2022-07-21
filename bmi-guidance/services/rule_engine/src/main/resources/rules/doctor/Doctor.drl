@@ -1,0 +1,146 @@
+package rules.doctor;
+
+import java.util.List
+import java.util.Map
+
+import com.mindsmiths.sdk.utils.Utils
+import com.mindsmiths.modelTrainer.ModelTrainerAPI
+import com.mindsmiths.modelTrainer.PredictionResult
+import com.mindsmiths.ruleEngine.model.Initialize
+import com.mindsmiths.ruleEngine.util.Log
+import com.mindsmiths.telegramAdapter.TelegramKeyboardAnswered
+import com.mindsmiths.telegramAdapter.TelegramReceivedMessage
+
+import agents.doctor.Doctor
+import signals.BMIMeasurement
+import signals.BMIResponse
+import signals.Prediction
+
+
+rule "Welcome doctor"
+    when
+        initialize: Initialize() from entry-point "agent-created"
+        message: TelegramReceivedMessage() from entry-point "signals"
+        doctor: Doctor()
+    then
+        String welcomeText = Utils.randomChoice(Doctor.welcomeTexts);
+        doctor.sendMessage(welcomeText);
+        delete(initialize);
+        delete(message);
+end
+
+rule "Predict obesity for request"
+    when
+        req: BMIMeasurement() from entry-point "signals"
+        doctor: Doctor()
+    then
+        String predictionId = ModelTrainerAPI.predict("bmi-model", Map.of("age", req.getAge(), "bmi", req.getBMI()), List.of("not_obese", "obese"));
+        insert(new Prediction(predictionId, req));
+        delete(req);
+end
+
+rule "Predict obesity with newer model"
+    salience 200
+    when
+        doctor: Doctor(currentRequest != null)
+        req: Prediction(modelVersion != null, modelVersion < doctor.modelVersion, sentToDoctor != true)
+    then
+        String predictionId = ModelTrainerAPI.predict("bmi-model", Map.of("age", req.getBmiMeasurement().getAge(), "bmi", req.getBmiMeasurement().getBMI()), List.of("not_obese", "obese"));
+        modify(req) {
+            setPredictionId(predictionId),
+            setPrediction(null),
+            setConfidence(null),
+            setModelVersion(null)
+        };
+end
+
+rule "Process model's response"
+    salience 100
+    when
+        pred: Prediction()
+        res: PredictionResult(id == pred.predictionId) from entry-point "signals"
+        doctor: Doctor()
+    then
+        Boolean isObese = res.getResult().equals("obese");
+        Log.info(String.format(
+           "Model trainer returned label: %s\nAge: %d\nBMI: %.1f",
+           res.getResult(), pred.getBmiMeasurement().getAge(), pred.getBmiMeasurement().getBMI()
+        ));
+        modify(pred) {
+            setPrediction(isObese),
+            setConfidence(res.getConfidence()),
+            setModelVersion(res.getModelVersion())
+        };
+
+        if (doctor.getModelVersion() == null || res.getModelVersion() > doctor.getModelVersion()) {
+            doctor.sendMessage("I've upgraded my knowledge!");
+            doctor.setModelVersion(res.getModelVersion());
+        }
+
+        delete(res);
+end
+
+rule "Calculate pending requests"
+    salience 1000
+    no-loop
+    when
+        doctor: Doctor()
+        pending: Number() from accumulate(Prediction(), count(1))
+    then
+        modify(doctor) {setPendingRequests(pending.intValue())};
+end
+
+rule "Answer BMI request with high confidence prediction"
+    when
+        pred: Prediction(prediction != null, req: bmiMeasurement, confidence >= 0.75, sentToDoctor != true)
+        doctor: Doctor()
+    then
+        Log.info("Confident in prediction, handling automatically");
+        modify(doctor) {setHandledAutomatically(doctor.getHandledAutomatically() + 1)};
+        doctor.send(req.getFrom(), new BMIResponse(req, pred.getPrediction()));
+
+        delete(pred);
+end
+
+rule "Ask doctor for help with BMI request"
+    when
+        pred: Prediction(prediction != null, sentToDoctor != true, predictionId: predictionId, confidence < 0.75)
+        doctor: Doctor(currentRequest == null)
+    then
+        doctor.sendMessage("Pending requests: " + doctor.getPendingRequests() +
+                          ", handled automatically since last time: " + doctor.getHandledAutomatically());
+        doctor.sendBMIMeasurement(pred);
+        modify(doctor) {setCurrentRequest(predictionId), setHandledAutomatically(0)};
+        modify(pred) {setSentToDoctor(true)};
+end
+
+rule "Process doctor's BMI answer"
+    when
+        answer: TelegramKeyboardAnswered(referenceId: referenceId) from entry-point "signals"
+        pred: Prediction(req: bmiMeasurement, predictionId == referenceId)
+        doctor: Doctor()
+    then
+        boolean isObese = answer.getAnswer().equals("YES");
+
+        doctor.send(req.getFrom(), new BMIResponse(req, isObese));
+        ModelTrainerAPI.addDataPoint(
+           "bmi-model", Map.of("age", req.getAge(), "bmi", req.getBMI()), isObese ? "obese" : "not_obese"
+        );
+
+        String confirmation = Utils.randomChoice(Doctor.confirmationTexts);
+        if (confirmation != null)
+           doctor.sendMessage(confirmation);
+
+        modify(doctor) {setCurrentRequest(null)};
+        delete(answer);
+        delete(pred);
+end
+
+rule "Unrecognizable message"
+    salience -100
+    when
+        message: TelegramReceivedMessage() from entry-point "signals"
+        doctor: Doctor()
+    then
+        delete(message);
+end
