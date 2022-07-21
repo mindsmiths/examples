@@ -16,14 +16,7 @@ Ideally, this is how we want to use ML models in general: not to substitute huma
 
 
 ### Running the demo
-To run, first set your [TELEGRAM_BOT_TOKEN](https://core.telegram.org/bots) and [OPENAI_API_KEY](https://beta.openai.com/account/api-keys) in `.env`. Additionally, you will need to set the credentials for accessing storage on Azure:
-```
-CLOUD_TYPE=AZURE
-AZURE_ACCOUNT_URL="https://bmiguidance.blob.core.windows.net"
-AZURE_ACCOUNT_KEY="3b4PVRaRisL6JcLeMbFlJDddyWP61/lqNFeTuPORfHwZNZS/cawTyfg+gWldH9hmruLRRxcgWcys+AStzBHOfQ=="
-AZURE_MEDIA_CONTAINER="media"
-```
-This is just for accessing the media content that gets sent to the user. Now just start up the demo with `forge run`.
+To run, first set your [TELEGRAM_BOT_TOKEN](https://core.telegram.org/bots) and [OPENAI_API_KEY](https://beta.openai.com/account/api-keys) in `.env`. Now just start up the demo with `forge run`.
 
 The communication with all users goes on via Telegram Messenger, and we use GPT-3 for creativity in proactive prompts for patients. There are just a couple of things to keep in mind when running this demo: 
 for the sake of convenience, the first user to register automatically becomes the doctor, and every subsequent user that sends a message on Telegram is welcomed as a patient. 

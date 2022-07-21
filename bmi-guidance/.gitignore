@@ -1,4 +1,4 @@
-.env
+.env*
 .credentials
 
 *.log
@@ -18,7 +18,7 @@ err
 get-pip.py
 requirements.lock
 package-lock.json
-supervisord.pid
+supervisord.*
 
 *secrets.yaml
 secrets
