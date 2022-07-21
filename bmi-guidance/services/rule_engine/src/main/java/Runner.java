@@ -39,7 +39,7 @@ public class Runner extends RuleEngineService {
                 new RoboPatient("telegram", chatId, PatientUtils.generateRandomScenario())
             ).getId();
 
-            // Create doctor agent
+        // Create doctor agent
         else if (!Agents.exists(Doctor.ID))
             return Agents.createAgent(new Doctor("telegram", chatId)).getId();
 
