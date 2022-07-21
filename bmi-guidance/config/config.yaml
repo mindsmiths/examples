@@ -1,0 +1,102 @@
+global:
+  dependencies:
+    python:
+      - forge-sdk==4.0.0a9
+      - forge-cli==4.0.0a10
+      - cecs==4.0.0a1
+      - services/*.py
+
+  env:
+    PROJECT_SLUG: "bmi_guidance"
+    LOG_LEVEL: INFO
+
+  cecs:
+    params: "-e venv"
+  repository: "nexus.vingd.net"
+
+services:
+  rule-engine:
+    type: java
+    dependencies:
+      - robo-patient
+    resources:
+      cpu: 500m
+      memory: 650Mi
+
+  heartbeat-scheduler:
+    package: heartbeat
+    type: python
+    version: 4.0.0a4
+    env:
+      HEARTBEAT_CYCLE: 5
+    db:
+      mongo: true
+    dependencies:
+      - rule-engine-api==4.0.0a20
+    resources:
+      cpu: 69m
+      memory: 65Mi
+
+  heartbeat-sender:
+    package: heartbeat
+    type: python
+    version: 4.0.0a4
+    db:
+      mongo: true
+    dependencies:
+      - rule-engine-api==4.0.0a20
+    resources:
+      cpu: 84m
+      memory: 94Mi
+
+  telegram-adapter:
+    type: python
+    version: 4.0.0a12
+    db:
+      mongo: true
+    env:
+      TELEGRAM_BOT_TOKEN: "{{env.TELEGRAM_BOT_TOKEN}}"
+    resources:
+      cpu: 81m
+      memory: 130Mi
+
+  model-trainer:
+    type: python
+    version: 4.0.0a4
+    db:
+      mongo: true
+    env:
+      EXCLUDED_MODEL_TYPES: 'KNN,NN_TORCH,TRANSF'
+    resources:
+      cpu: 100m
+      memory: 100Mi
+
+  robo-patient:
+    enabled: false
+    type: python
+    env:
+      NUM_PATIENTS: 30
+    db:
+      mongo: true
+    resources:
+      cpu: 100m
+      memory: 100Mi
+
+  forge-api:
+    type: python
+    version: 4.0.0a2
+    command:
+      run: "uvicorn forge_api.service:app"
+      cwd: "."
+    resources:
+      cpu: 81m
+      memory: 130Mi
+
+  gpt3-adapter:
+    type: python
+    version: 4.0.0a8
+    env:
+      OPENAI_API_KEY: "{{env.OPENAI_API_KEY}}"
+    resources:
+      cpu: 81m
+      memory: 130Mi
