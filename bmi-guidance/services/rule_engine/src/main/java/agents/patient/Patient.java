@@ -30,13 +30,12 @@ public class Patient extends Agent {
     private boolean pinged;
 
 
-    public Patient(String connectionName, String connectionId,
-                   int age, int height, Pair<Integer, Integer> normalWeightRange) {
+    public Patient(String connectionName, String connectionId, Scenario scenario) {
         super(connectionName, connectionId);
-        this.age = age;
-        this.height = height;
-        this.lowWeightRange = normalWeightRange.getLeft();
-        this.highWeightRange = normalWeightRange.getRight();
+        this.age = scenario.getAge();
+        this.height = scenario.getHeight();
+        this.lowWeightRange = scenario.getNormalWeightRange().getLeft();
+        this.highWeightRange = scenario.getNormalWeightRange().getRight();
     }
 
     public void sendMessage(String text) {

@@ -1,5 +1,6 @@
 package agents.roboPatient;
 
+import agents.patient.Scenario;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
@@ -18,13 +19,12 @@ public class RoboPatient extends Agent {
     private Integer lowWeightRange;
     private Integer highWeightRange;
 
-    public RoboPatient(String connectionName, String connectionId,
-                   int age, int height, Pair<Integer, Integer> normalWeightRange) {
+    public RoboPatient(String connectionName, String connectionId, Scenario scenario) {
         super(connectionName, connectionId);
-        this.age = age;
-        this.height = height;
-        this.lowWeightRange = normalWeightRange.getLeft();
-        this.highWeightRange = normalWeightRange.getRight();
+        this.age = scenario.getAge();
+        this.height = scenario.getHeight();
+        this.lowWeightRange = scenario.getNormalWeightRange().getLeft();
+        this.highWeightRange = scenario.getNormalWeightRange().getRight();
     }
 
     public void sendMessage(String text) {
