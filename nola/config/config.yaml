@@ -1,9 +1,9 @@
 global:
   dependencies:
     python:
-      - forge-sdk==4.0.0a9
-      - forge-cli==4.0.0a8
-      - cecs==4.0.0a1
+      - forge-sdk==4.0.0a12
+      - forge-cli==4.0.0a26
+      - cecs==4.0.0a3
       - services/*.py
   env:
     PROJECT_SLUG: "nola"
@@ -31,7 +31,7 @@ services:
     db:
       mongo: true
     dependencies:
-      - rule-engine-api==4.0.0a20
+      - rule-engine-api==4.0.0a21
     resources:
       cpu: 69m
       memory: 65Mi
@@ -43,14 +43,14 @@ services:
     db:
       mongo: true
     dependencies:
-      - rule-engine-api==4.0.0a20
+      - rule-engine-api==4.0.0a21
     resources:
       cpu: 84m
       memory: 94Mi
 
   telegram-adapter:
     type: python
-    version: 4.0.0a9
+    version: 4.0.0a12
     db:
       mongo: true
     env:
