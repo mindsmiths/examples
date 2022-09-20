@@ -1,0 +1,79 @@
+package rules.instructor;
+
+import com.mindsmiths.ruleEngine.model.Heartbeat;
+import com.mindsmiths.ruleEngine.util.Log;
+import agents.Instructor
+import com.mindsmiths.armory.events.UserConnectedEvent
+import com.mindsmiths.armory.events.SubmitEvent
+import agents.models.Task;
+
+
+rule "Generate task"
+    when
+        agent: Instructor(currentTask == null)
+    then
+        modify(agent) { setCurrentTask(agent.generateTask()) };
+end
+
+rule "Intro screen"
+    when
+        signal: UserConnectedEvent() from entry-point "signals"
+        agent: Instructor()
+    then
+        agent.showIntroScreen();
+        delete(signal);
+end
+
+rule "Send first task"
+    when
+        signal: SubmitEvent(getParamAsString("answer") == "yes") from entry-point "signals"
+        agent: Instructor()
+    then
+        agent.showQuestionScreen();
+        delete(signal);
+end
+
+rule "Answered task"
+    when
+        signal: SubmitEvent(getParamAsString("result") != null) from entry-point "signals" 
+        agent: Instructor()
+    then
+        boolean correct = signal.getParamAsString("result").equals(
+                            String.valueOf(agent.getCurrentTask().correctAnswer()));
+        modify(agent) {
+            answeredTask(correct),
+            setCurrentTask(null)
+        }
+        agent.showResultScreen(correct);
+        delete(signal);
+end
+
+rule "Send new task"
+    when
+        signal: SubmitEvent(getParamAsString("answer") == "yes") from entry-point "signals"
+        agent: Instructor()
+    then
+        agent.showQuestionScreen();
+        delete(signal);
+end
+
+rule "Stop playing"
+    when
+        signal: SubmitEvent(getParamAsString("answer") == "no") from entry-point "signals"
+        agent: Instructor()
+    then
+        agent.showGoodbyeScreen();
+        delete(signal);
+end
+
+
+rule "Decay neurons"
+    // You're forgetting slowly over time
+    salience 1000
+    no-loop
+    when
+        Heartbeat() from entry-point "signals"
+        agent: Instructor()
+    then
+        modify(agent) { decayNeurons() };
+end

@@ -1,0 +1,73 @@
+global:
+  dependencies:
+    python:
+      - forge-sdk==4.0.0a12
+      - forge-cli==4.0.0a26
+      - cecs==4.0.0a3
+      - services/*.py
+  env:
+    PROJECT_SLUG: 'pascal_teaches_math'
+    LOG_LEVEL: INFO
+
+  cecs:
+    params: -e venv
+
+  repository: nexus.vingd.net
+
+services:
+
+  rule-engine:
+    type: java
+    resources:
+      cpu: 500m
+      memory: 650Mi
+
+  heartbeat-scheduler:
+    package: heartbeat
+    type: python
+    version: 4.0.0a4
+    env:
+      HEARTBEAT_CYCLE: 1
+    db:
+      mongo: true
+    dependencies:
+      - rule-engine-api==4.0.0a21
+    resources:
+      cpu: 69m
+      memory: 65Mi
+
+  heartbeat-sender:
+    enabled: false
+    package: heartbeat
+    type: python
+    version: 4.0.0a4
+    db:
+      mongo: true
+    dependencies:
+      - rule-engine-api==4.0.0a21
+    resources:
+      cpu: 84m
+      memory: 94Mi
+
+  armory:
+    type: django
+    version: 4.0.0a14
+    command:
+      run: "daphne -b 0.0.0.0 armory.config.asgi:application"
+    db:
+      mongo: true
+      postgres: true
+    dependencies:
+      - channels==3.0.4
+      - channels-redis==3.3.1
+      - django==3.2.9
+      - daphne==3.0.2
+      - django-environ==0.8.1
+      - gunicorn==20.1.0
+      - websockets==10.1
+    env:
+      SITE_URL: '{{ "armory." + env.get("HOST_DOMAIN", "") }}'
+      INTERNAL_SITE_URL: "armory"
+    resources:
+      cpu: 50m
+      memory: 75Mi
