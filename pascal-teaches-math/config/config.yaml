@@ -2,7 +2,7 @@ global:
   dependencies:
     python:
       - forge-sdk==4.0.0a12
-      - forge-cli==4.0.0a26
+      - forge-cli==4.0.0a27
       - cecs==4.0.0a3
       - services/*.py
   env:
@@ -66,7 +66,7 @@ services:
       - gunicorn==20.1.0
       - websockets==10.1
     env:
-      SITE_URL: '{{ "armory." + env.get("HOST_DOMAIN", "") }}'
+      SITE_URL: '{{ "8000." + env.get("ENV_URL", "") }}'
       INTERNAL_SITE_URL: "armory"
     resources:
       cpu: 50m
