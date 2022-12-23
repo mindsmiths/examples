@@ -1,7 +1,7 @@
 package utils;
 
 
-public class Utils {
+public class TextUtils {
     
     public static String trimText(String text) {
         Integer lastPunctuation = Math.max(

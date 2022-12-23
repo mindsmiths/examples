@@ -2,25 +2,23 @@ package rules.nola;
 
 import com.mindsmiths.gpt3.completion.GPT3Completion
 import com.mindsmiths.ruleEngine.model.Heartbeat
-import com.mindsmiths.ruleEngine.model.Initialize
-import com.mindsmiths.telegramAdapter.TelegramReceivedMessage
-
-import java.util.Date
+import com.mindsmiths.telegramAdapter.events.TelegramReceivedMessage
+import com.mindsmiths.sdk.utils.Utils
 
 import agents.Nola
-import utils.Utils
+import utils.TextUtils
+import signals.AgentCreated
 
 
 rule "First contact"
     salience 100
     when
-        initialize: Initialize() from entry-point "agent-created"
         msg: TelegramReceivedMessage(name: firstName) from entry-point "signals"
-        agent: Nola()
+        agent: Nola(name == null)
     then
         agent.sendWelcomeMessage(name);
         modify(agent) {setName(name)};
-        agent.send("SMITH", initialize, "new-agent");
+        agent.send("SMITH", new AgentCreated(agent));
         delete(msg);
 end
 
@@ -34,7 +32,7 @@ rule "Handle message"
         modify(agent) {
             addMessageToMemory(agent.getPersonality().getHumanName(agent.getName()), msg.getText()),
             setPinged(false),
-            setLastInteractionTime(new Date())
+            setLastInteractionTime(Utils.getUtcDatetime())
         };
         agent.askGPT3();  // message text as input for GPT-3
         delete(msg);
@@ -47,7 +45,7 @@ rule "Send GPT3 response"
         gpt3Result: GPT3Completion() from entry-point "signals"
         agent: Nola()
     then
-        String response = Utils.trimText(gpt3Result.getBestResponse());
+        String response = TextUtils.trimText(gpt3Result.getBestResponse());
         agent.sendMessage(response);
         // adds the new gpt3 response to memory
         modify(agent) {addMessageToMemory(agent.getPersonality().getAiName(), response)};
@@ -69,11 +67,11 @@ end
 
 rule "Expire conversation"
     when
-        Heartbeat(ts: timestamp) from entry-point "signals" // getting current time from heartbeat timestamp
+        Heartbeat(now: timestamp) from entry-point "signals" // getting current time from heartbeat timestamp
         // there is an ongoing conversation and last interaction was over 2 minutes ago
         agent: Nola(
             memory.isEmpty() == false,
-            lastInteractionTime before[10m] ts
+            lastInteractionTime before[10m] now
         )
     then
         modify(agent) {clearMemory()};
@@ -83,10 +81,10 @@ end
 
 rule "Re-engage user"
     when
-        Heartbeat(ts: timestamp) from entry-point "signals"
+        Heartbeat(now: timestamp) from entry-point "signals"
         agent: Nola(
             memory.isEmpty() == false,
-            lastInteractionTime before[2m] ts,
+            lastInteractionTime before[2m] now,
             pinged == false
         )
     then

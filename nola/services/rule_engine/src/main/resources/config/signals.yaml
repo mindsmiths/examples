@@ -1,4 +1,4 @@
-com.mindsmiths.telegramAdapter.TelegramReceivedMessage:
+com.mindsmiths.telegramAdapter.events.TelegramReceivedMessage:
   - !GetOrCreateAgentByConnection
     connectionName: telegram
     connectionField: chatId
