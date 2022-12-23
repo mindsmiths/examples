@@ -7,14 +7,13 @@ import com.mindsmiths.sdk.utils.Utils;
 import com.mindsmiths.telegramAdapter.TelegramAdapterAPI;
 import lombok.Getter;
 import lombok.Setter;
+import models.Personality;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Random;
-
-import models.Personality;
 
 @Getter
 @Setter
@@ -22,7 +21,7 @@ public class Nola extends Agent {
 
     private List<String> memory = new ArrayList<>();
     private int MAX_MEMORY = 4;
-    private Date lastInteractionTime;
+    private LocalDateTime lastInteractionTime;
     private boolean pinged;
     private String name;
     Personality personality = Personality.friendlyAI;
@@ -35,6 +34,11 @@ public class Nola extends Agent {
         "How have you been today?"
     );
 
+
+    public Nola() {
+    }
+
+
     private void trimMemory() {
         if (memory.size() > MAX_MEMORY + 1)
             memory = memory.subList(memory.size() - 1 - MAX_MEMORY, memory.size());
@@ -44,16 +48,8 @@ public class Nola extends Agent {
         memory.clear();
     }
 
-    public Nola() {
-    }
-
-    public Nola(String connectionName, String connectionId) {
-        super(connectionName, connectionId);
-    }
-
-
     public void sendMessage(String text) {
-        String chatId = getConnections().get("telegram");
+        String chatId = getConnection("telegram");
         TelegramAdapterAPI.sendMessage(chatId, text);
     }
 
@@ -76,7 +72,7 @@ public class Nola extends Agent {
     public void changePersonality() {
         clearMemory();
         List<Personality> choices = new ArrayList<>(
-                Arrays.asList(Personality.values())
+            Arrays.asList(Personality.values())
         );
         choices.remove(personality);
         personality = Utils.randomChoice(choices);
@@ -90,29 +86,29 @@ public class Nola extends Agent {
 
     public void askGPT3() {
         simpleGPT3Request(
-                personality.getInstruction(name) + String.join("\n", memory) + personality.getAiName() + ":",
-                personality.getTemp(),
-                personality.getResponseLen(),
-                List.of(personality.getAiName() + ":", personality.getHumanName(name) + ":")
+            personality.getInstruction(name) + String.join("\n", memory) + personality.getAiName() + ":",
+            personality.getTemp(),
+            personality.getResponseLen(),
+            List.of(personality.getAiName() + ":", personality.getHumanName(name) + ":")
         );
     }
 
     public void simpleGPT3Request(String prompt, Double temp, Integer responseLen, List<String> stop) {
         Log.info("Prompt for GPT-3:\n" + prompt);
         GPT3AdapterAPI.complete(
-                prompt, // input prompt
-                "text-davinci-001", // model
-                responseLen, // max tokens
-                temp, // temperature
-                1.0, // topP
-                1, // N
-                null, // logprobs
-                false, // echo
-                stop, // STOP words
-                0.6, // presence penalty
-                0.0, // frequency penalty
-                1, // best of
-                null // logit bias
+            prompt, // input prompt
+            "text-davinci-001", // model
+            responseLen, // max tokens
+            temp, // temperature
+            1.0, // topP
+            1, // N
+            null, // logprobs
+            false, // echo
+            stop, // STOP words
+            0.6, // presence penalty
+            0.0, // frequency penalty
+            1, // best of
+            null // logit bias
         );
     }
 }

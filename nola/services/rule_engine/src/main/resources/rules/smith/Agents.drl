@@ -1,11 +1,13 @@
 package rules.smith;
+
 import com.mindsmiths.ruleEngine.util.Log
 import com.mindsmiths.ruleEngine.util.Agents
-import com.mindsmiths.ruleEngine.model.Initialize
+import signals.AgentCreated
+
 
 rule "Register new agent"
     when
-        initAgent: Initialize(agent: agent) from entry-point "new-agent"
+        initAgent: AgentCreated(agent: agent) from entry-point "signals"
     then
         Log.info("New agent: " + agent + ", current num agents: " + Agents.getCount());
         delete(initAgent);
