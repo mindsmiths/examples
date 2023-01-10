@@ -1,0 +1,28 @@
+package rules.gameAdmin;
+
+import com.mindsmiths.ruleEngine.util.Log
+
+import agents.GameAdmin
+import models.Celebrity
+import signals.*
+
+
+// *** Player management ***
+rule "New player joined"
+    when
+        signal: PlayerJoined(playerName: player.getName()) from entry-point "signals"
+        agent: GameAdmin()
+    then
+        Log.info("New player joined! Welcome, " + playerName + "!");
+        delete(signal);
+end
+
+// *** Celebrity management ***
+rule "New celebrity"
+    when
+        celebrity: Celebrity() from entry-point "signals"
+        agent: GameAdmin()
+    then
+        agent.getCelebrities().add(celebrity);
+        delete(celebrity);
+end

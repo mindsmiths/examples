@@ -1,0 +1,56 @@
+global:
+  dependencies:
+    python:
+      - forge-sdk==5.0.0
+      - forge-cli==5.0.0
+      - cecs==5.0.0
+      - services/*.py
+  env:
+    PROJECT_SLUG: "celebrities"
+
+    LOG_LEVEL: INFO
+
+  repository: "nexus.vingd.net"
+
+  cecs:
+    params: "-e venv"
+
+services:
+  rule-engine:
+    type: java
+    resources:
+      cpu: 500m
+      memory: 650Mi
+
+  heartbeat:
+    type: python
+    version: 5.0.0
+    env:
+      HEARTBEAT_CYCLE: 5
+    db:
+      mongo: true
+    dependencies:
+      - rule-engine-api==5.0.0
+    resources:
+      cpu: 69m
+      memory: 65Mi
+
+  telegram-adapter:
+    type: python
+    version: 5.0.0
+    db:
+      mongo: true
+    env:
+      TELEGRAM_BOT_TOKEN: "{{ env.TELEGRAM_BOT_TOKEN }}"
+    resources:
+      cpu: 81m
+      memory: 130Mi
+
+  gpt3-adapter:
+    type: python
+    version: 5.0.0
+    env:
+      OPENAI_API_KEY: "{{ env.OPENAI_API_KEY }}"
+    resources:
+      cpu: 81m
+      memory: 130Mi

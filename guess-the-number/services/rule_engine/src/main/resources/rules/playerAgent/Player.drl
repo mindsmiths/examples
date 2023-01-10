@@ -1,0 +1,20 @@
+package rules.playerAgent;
+
+import com.mindsmiths.telegramAdapter.events.TelegramReceivedMessage
+
+import agents.PlayerAgent
+import signals.*
+
+
+// *** New player ***
+rule "Welcome new player"
+    salience 100
+    when
+        signal: TelegramReceivedMessage(name: firstName) from entry-point "signals"
+        agent: PlayerAgent(name == null)
+    then
+        agent.sendWelcomeMessage(name);
+        modify(agent) {setName(name)};
+        agent.send("GAME_ADMIN", new PlayerJoined(agent));
+        delete(signal);
+end
