@@ -10,6 +10,9 @@ import com.mindsmiths.telegramAdapter.TelegramAdapterAPI;
 import com.mindsmiths.telegramAdapter.api.KeyboardData;
 import com.mindsmiths.telegramAdapter.api.KeyboardOption;
 import com.mindsmiths.telegramAdapter.api.MediaData;
+import com.mindsmiths.telegramAdapter.api.MediaType;
+
+import models.Celebrity;
 
 
 @Getter
@@ -17,13 +20,41 @@ import com.mindsmiths.telegramAdapter.api.MediaData;
 @NoArgsConstructor
 public class PlayerAgent extends Agent {
     private String name;
+    private boolean waitingForAnswer;
+
+    private Celebrity currentCelebrity;
+    private int numberAttempts;
 
     public void sendWelcomeMessage(String name) {
-        sendMessage("Welcome, " + name + "!\n" +
-                        "The goal of the game is to guess the number of followers a person or brand has on Twitter. " +
-                        "You have 3 guesses per game.\nReady? Press start to play! 😊",
+        sendMessage("Welcome, " + name + "! " +
+                        "The goal of the game is to guess the number of followers a person or a brand has on Twitter. " +
+                        "You have 3 guesses for each of them. Ready? Press start to play!",
             new KeyboardData("start-game", List.of(new KeyboardOption("NEW_GAME", "Start game")))
         );
+    }
+
+    public void sendStartMessage() {
+        sendMessage(List.of(new MediaData(
+            MediaType.photo,
+            currentCelebrity.getImageUrl(),
+            "Can you guess how many followers " + currentCelebrity.getName() + " has on Twitter?")));
+    }
+
+    public void offerNewGame(String text) {
+        sendMessage(text,
+            new KeyboardData("offer-rematch",
+                List.of(
+                    new KeyboardOption("NEW_GAME", "Hit me again!"),
+                    new KeyboardOption("STOP_PLAYING", "Enough for today")
+                )
+            )
+        );
+    }
+
+    public void resetGame() {
+        this.currentCelebrity = null;
+        this.numberAttempts = 0;
+        this.waitingForAnswer = false;
     }
 
 

@@ -1,6 +1,7 @@
 package models;
 
 import com.mindsmiths.sdk.core.api.Event;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

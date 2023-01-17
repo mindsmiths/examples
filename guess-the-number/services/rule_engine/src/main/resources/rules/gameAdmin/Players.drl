@@ -4,6 +4,7 @@ import com.mindsmiths.ruleEngine.util.Log
 
 import agents.GameAdmin
 import models.Celebrity
+import models.EvaluationResult
 import signals.*
 
 

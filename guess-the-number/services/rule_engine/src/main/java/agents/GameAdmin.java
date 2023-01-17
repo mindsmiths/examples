@@ -1,11 +1,12 @@
 package agents;
 
-import com.mindsmiths.ruleEngine.model.Agent;
 import lombok.Data;
-import models.Celebrity;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.mindsmiths.ruleEngine.model.Agent;
+
+import models.Celebrity;
 
 
 @Data
