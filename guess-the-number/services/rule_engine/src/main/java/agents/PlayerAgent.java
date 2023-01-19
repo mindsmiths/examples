@@ -28,8 +28,7 @@ public class PlayerAgent extends Agent {
     public void sendWelcomeMessage(String name) {
         sendMessage("Welcome, " + name + "! " +
                         "The goal of the game is to guess the number of followers a person or a brand has on Twitter. " +
-                        "You have 3 guesses for each of them. Ready? Press start to play!",
-            new KeyboardData("start-game", List.of(new KeyboardOption("NEW_GAME", "Start game")))
+                        "You have 3 guesses for each of them. Ready? Press start to play!"
         );
     }
 

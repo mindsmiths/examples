@@ -11,10 +11,14 @@ import signals.*
 // *** Player management ***
 rule "New player joined"
     when
-        signal: PlayerJoined(playerName: player.getName()) from entry-point "signals"
+        signal: PlayerJoined(player: player) from entry-point "signals"
         agent: GameAdmin()
     then
-        Log.info("New player joined! Welcome, " + playerName + "!");
+        modify(agent) {
+            getPlayers().add(player)
+        };
+        Log.info("New player joined! Welcome, " + player.getName() + "!");
+        Log.info("There are now " + agent.getPlayers().size() + " players in the game.");
         delete(signal);
 end
 

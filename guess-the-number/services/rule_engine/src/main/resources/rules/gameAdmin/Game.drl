@@ -4,22 +4,64 @@ import com.mindsmiths.ruleEngine.util.Log
 import com.mindsmiths.sdk.utils.Utils
 
 import agents.GameAdmin
+import agents.PlayerAgent
 import models.Celebrity
 import models.EvaluationResult
+import models.Game
 import signals.*
 
 
 // *** Game management ***
+rule "Game in progress"
+    salience 100
+    when
+        signal: NewGameRequest() from entry-point "signals"
+        exists(Game())
+    then
+        Log.info("Game in progress, skipping request...");
+        delete(signal);
+end
+
 rule "New game request"
     when
         signal: NewGameRequest() from entry-point "signals"
         agent: GameAdmin()
     then
         Celebrity celebrity = Utils.randomChoice(agent.getCelebrities());
-        agent.send(signal.getFrom(), new StartGame(celebrity));
+        Game game = new Game();
+        insert(game);
+        for (PlayerAgent player : agent.getPlayers()) {
+            agent.send(player.getId(), new StartGame(celebrity));
+        }
         delete(signal);
 end
 
+rule "Store player answer"
+    when
+        guess: Guess() from entry-point "signals"
+        game: Game()
+        agent: GameAdmin()
+    then
+        modify(game) {
+            getGuesses().put(guess.getFrom(), guess)
+        };
+        delete(guess);
+        Log.info("Stored guess. Guesses so far: " + game.getGuesses().size());
+end
+
+rule "Finish game"
+    when
+        agent: GameAdmin(players: players)
+        game: Game(guesses.size() == players.size())
+    then
+        // TODO: Evaluate guesses and calculate the winner
+        for (PlayerAgent player : agent.getPlayers()) {
+            agent.send(player.getId(), new EndGame(123));
+        }
+        delete(game);
+end
+
+/*
 // *** Guess evaluation ***
 rule "Guess too low"
     when
@@ -54,3 +96,4 @@ rule "Incorrect guess too many attempts"
         agent.send(guess.getFrom(), new EndGame());
         delete(guess);
 end
+*/

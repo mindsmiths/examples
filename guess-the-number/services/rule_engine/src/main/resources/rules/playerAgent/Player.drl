@@ -22,16 +22,6 @@ rule "Welcome new player"
 end
 
 // *** Game management ***
-rule "Request new game using keyboard"
-    when
-        signal: TelegramKeyboardAnswered(answer == "NEW_GAME") from entry-point "signals"
-        agent: PlayerAgent()
-    then
-        agent.send("GAME_ADMIN", new NewGameRequest());
-        modify(agent) {resetGame()};
-        delete(signal);
-end
-
 rule "Request new game using text"
     when
         signal: TelegramReceivedMessage(text == "/start") from entry-point "signals"
