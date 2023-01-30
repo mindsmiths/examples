@@ -1,0 +1,68 @@
+package rules.felix;
+
+import agents.Felix
+import com.mindsmiths.ruleEngine.model.Heartbeat
+import com.mindsmiths.armory.event.UserConnected
+import com.mindsmiths.armory.event.Submit
+import com.mindsmiths.ruleEngine.util.Log
+import com.mindsmiths.gpt3.completion.GPT3Completion
+
+rule "Heartbeat"
+    when
+        Heartbeat() from entry-point "signals"
+    then
+        Log.info("Felix's heartbeat");
+end
+
+rule "Welcome new user"
+   when
+       signal: UserConnected() from entry-point "signals"
+       agent: Felix()
+   then
+       agent.showWelcomeScreens();
+       delete(signal);
+end
+
+rule "Start user onboarding"
+    when
+        signal: Submit(getParamAsString("buttonPressed") == "finishWelcome") from entry-point "signals"
+        agent: Felix()
+    then
+        modify(agent){
+            setName(signal.getParamAsString("name"))
+            };
+        agent.showOnboardingScreens();
+        delete(signal);
+end
+
+rule "Start survey"
+    when
+        signal: Submit(getParamAsString("buttonPressed") == "finishOnboarding") from entry-point "signals"
+        agent: Felix()
+    then
+        modify(agent){
+            setWeight (signal.getParamAsInteger("weight")),
+            setHeight (signal.getParamAsInteger("height"))
+        };
+        agent.showSurveyScreens();
+        delete (signal);
+end
+
+rule "Ask GPT3 workout plan"
+    salience 10
+    when
+        signal: Submit(getParamAsString("buttonPressed") == "surveyCompleted") from entry-point "signals"
+        agent: Felix()
+    then
+        agent.askGPT3();
+end
+
+rule "Store workout plan"
+    when
+        gpt3Result: GPT3Completion() from entry-point "signals"
+        agent: Felix()
+    then
+        modify(agent) {setWorkoutPlan(gpt3Result.getBestResponse())};
+        agent.showGPT3Response();
+        delete(gpt3Result);
+end
