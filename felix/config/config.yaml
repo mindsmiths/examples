@@ -1,0 +1,76 @@
+global:
+  dependencies:
+    python:
+      - forge-sdk==5.0.4
+      - forge-cli==5.0.3
+      - cecs==5.0.1
+      - services/*.py
+  env:
+    PROJECT_SLUG: 'felix'
+
+    ENVIRONMENT_NAME: {{ env.ENVIRONMENT_NAME }}
+    ENVIRONMENT: '{{ env.ENVIRONMENT | default("local", True) }}'
+    LOG_LEVEL: INFO
+
+  cecs:
+    params: "-e venv"
+
+  repository: "nexus.vingd.net"
+
+services:
+
+  rule-engine:
+    type: java
+    db:
+      mongo: true
+    resources:
+      cpu: 500m
+      memory: 650Mi
+    dependencies:
+      - armory
+
+  heartbeat:
+    package: heartbeat
+    type: python
+    version: 5.0.1
+    env:
+      HEARTBEAT_CYCLE: 30
+    db:
+      mongo: true
+    dependencies:
+      - rule-engine-api==5.0.3
+    resources:
+      cpu: 69m
+      memory: 65Mi
+
+  armory:
+    type: django
+    version: 5.1.1
+    command:
+      run: "daphne -b 0.0.0.0 armory.config.asgi:application"
+    db:
+      mongo: true
+      postgres: true
+    dependencies:
+      - channels==3.0.5
+      - channels-redis==3.4.1
+      - django==3.2.16
+      - daphne==3.0.2
+      - django-environ==0.8.1
+      - gunicorn==20.1.0
+      - websockets==10.4
+    env:
+      SITE_URL: '{{ "armory." + env.get("HOST_DOMAIN", "") }}'
+      INTERNAL_SITE_URL: "armory"
+    resources:
+      cpu: 50m
+      memory: 75Mi
+
+  gpt3-adapter:
+    type: python
+    version: 5.0.0
+    env:
+      OPENAI_API_KEY: "{{env.OPENAI_API_KEY}}"
+    resources:
+      cpu: 81m
+      memory: 130Mi

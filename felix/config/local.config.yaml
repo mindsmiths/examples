@@ -1,0 +1,8 @@
+services:
+  armory:
+    command:
+      build: "./build.sh"
+      run: "armory runserver 8000"
+    env:
+      SITE_URL: '{{ env.ARMORY_SITE_URL | default("http://localhost:8000", true) }}'
+    port: 8000
