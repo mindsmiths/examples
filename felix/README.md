@@ -23,4 +23,6 @@ As for the URL, you just use your environment URL (e.g. http://workspace-ms-XXXX
 ## Get ready to rumble!
 This should be enough to get you started! You can find tutorial for Felix at https://docs.mindsmiths.com/docs/tutorials/web-interactions/introduction. 
 
-To start playing, just run `forge run`. Have fun!
+To start playing, just run `forge run`. 
+
+Have fun!
