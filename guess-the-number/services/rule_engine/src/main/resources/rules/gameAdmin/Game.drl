@@ -19,38 +19,3 @@ rule "New game request"
         agent.send(signal.getFrom(), new StartGame(celebrity));
         delete(signal);
 end
-
-// *** Guess evaluation ***
-rule "Guess too low"
-    when
-        guess: Guess(guess < celebrity.followerCount)  from entry-point "signals"
-        agent: GameAdmin()
-    then
-        agent.send(guess.getFrom(), new GuessResult(EvaluationResult.TOO_LOW));
-end
-
-rule "Guess too high"
-    when
-        guess: Guess(guess > celebrity.followerCount)  from entry-point "signals"
-        agent: GameAdmin()
-    then
-        agent.send(guess.getFrom(), new GuessResult(EvaluationResult.TOO_HIGH));
-end
-
-rule "Guess correct"
-    when
-        guess: Guess(guess == celebrity.followerCount)  from entry-point "signals"
-        agent: GameAdmin()
-    then
-        agent.send(guess.getFrom(), new GuessResult(EvaluationResult.CORRECT));
-        delete(guess);
-end
-
-rule "Incorrect guess too many attempts"
-    when
-        guess: Guess(guess != celebrity.followerCount, attemptNumber >= 3)  from entry-point "signals"
-        agent: GameAdmin()
-    then
-        agent.send(guess.getFrom(), new EndGame());
-        delete(guess);
-end
