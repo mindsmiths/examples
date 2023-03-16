@@ -23,9 +23,10 @@ rule "Welcome new user"
        delete(signal);
 end
 
+
 rule "Start user onboarding"
     when
-        signal: Submit(getParamAsString("buttonPressed") == "finishWelcome") from entry-point "signals"
+        signal: Submit(buttonId == "nameSubmitted") from entry-point "signals"
         agent: Felix()
     then
         modify(agent){
@@ -37,7 +38,7 @@ end
 
 rule "Start survey"
     when
-        signal: Submit(getParamAsString("buttonPressed") == "finishOnboarding") from entry-point "signals"
+        signal: Submit(buttonId == "heightSubmitted") from entry-point "signals"
         agent: Felix()
     then
         modify(agent){
@@ -51,7 +52,7 @@ end
 rule "Ask GPT3 workout plan"
     salience 10
     when
-        signal: Submit(getParamAsString("buttonPressed") == "surveyCompleted") from entry-point "signals"
+        signal: Submit(buttonId == "surveyCompleted") from entry-point "signals"
         agent: Felix()
     then
         agent.askGPT3();
